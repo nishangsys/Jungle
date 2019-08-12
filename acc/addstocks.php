@@ -1,0 +1,268 @@
+<?php
+
+
+include 'dbc.php';
+
+/**
+Simple multiple Create, Read, Update and Delete (CRUD) using php mysql by asif18.com, for more tutorials visit: http://www.asif18.com
+for this tutorial visit: http://asif18.com/20/php/multiple-insert-update-using-php-mysql-delete-multiple-records-using-checkboxes-in-php/
+**/
+
+
+$query 	= mysql_query("SELECT * FROM `products` ORDER BY pro_id ASC"); // Select from the table
+$count 	= mysql_num_rows($query); // Get the rows count
+
+// Multipe insert case
+if(isset($_POST['submit'])) {
+	$amt = $_POST['total'];
+	if($amt > 0) {
+		
+		//***********check if product exists
+		for($i=1; $i<=$amt; $i++) {
+	  $check="SELECT * from products where product='".$_POST["product$i"]."' AND category='".$_POST["cate$i"]."' AND quatity>1";
+		$run=mysql_query($check) or die(mysql_error());
+		if(mysql_num_rows($run)>0){
+		
+			echo "<script>alert('Sorry Your Records cannot be uploaded because  ". $_POST["product$i"]." ". $_POST["cate$i"]."  is already in stocks')</script>";
+			echo "<p style='color:#f00; font-size:14px; font-weight:bold; text-align:center;'>Sorry Your Records cannot be uploaded because  ". $_POST["product$i"]." ". $_POST["cate$i"]."  is already in stocks</p>";
+			echo '<meta http-equiv="Refresh" content="1; url= simple.php">';
+			exit;
+		}
+		
+		else {
+			
+		
+		$year=date('Y');
+		$_POST = array_map("ucwords", $_POST);
+		$expense = "INSERT INTO expense(product, category,total,date,status,month,year) VALUES "; // Split the mysql_query
+		
+		$qry = "INSERT INTO products(product, category, price, quatity,total,date,status,month,year,agent,barcode,serial) VALUES "; // Split the mysql_query
+		
+		for($i=1; $i<=$amt; $i++) {
+			$year=date('Y');
+			$date=date('d-m-Y');
+			$month=date('m');
+			$status=1;
+			$_POST["total$i"]=$_POST["qty$i"]* $_POST["price$i"];
+			
+			
+			$agen=$_SESSION['username'];
+			$expense .= "('".$_POST["product$i"]."', '".$_POST["cate$i"]."', '".$_POST["total$i"]."',
+'$date', '$status',
+'$month', '$year'), "; // loop the mysql_query values to avoid more server loding time
+
+$agen=$_SESSION['username'];
+			$qry .= "('".$_POST["product$i"]."', '".$_POST["cate$i"]."', '".number_format((float)($_POST["price$i"]),2,'.','')."',
+			'".number_format((float)($_POST["qty$i"]),2,'.','')."', '".$_POST["total$i"]."',
+'$date', '$status',
+'$month', '$year', NOW(),'".$_POST["barcode$i"]."', '".$_POST["serial$i"]."'), "; // loop the mysql_query values to avoid more server loding time
+
+		}
+		$expense	= substr($expense, 0, strlen($expense)-2);
+		$insert = mysql_query($expense) or die (mysql_error()); // Execute the mysql_query
+		
+		$qry	= substr($qry, 0, strlen($qry)-2);
+		$insert1 = mysql_query($qry) or die (mysql_error()); // Execute the mysql_query
+	}
+	// Redirect for each cases
+	if($insert && $insert1) {
+		echo "<script>alert('Stocks Successfully added. Thank You')</script>";
+	}
+	
+}
+	}
+}
+
+
+?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>NSMS</title>
+<meta name="keywords" content="multiple insert in php, multiple crud using PHP MySql, multiple insert update delete using php mysql"/>
+<meta name="description" content="multiple insert update delete CRUD using PHP MySql. A simple way to insert, update and delete multiple values at a time using PHP MySql"/>
+<style>
+.as_wrapper{
+	margin:0 auto;
+	width:100%;
+	font-family:Arial;
+	color:#333;
+	background:#eee;
+	font-size:14px;
+}
+
+.as_country_container{
+	padding:20px;
+	border:2px dashed #17A3F7;
+}
+
+.a {
+	text-decoration:none;
+	color:#999;
+}
+
+.a:hover {
+	text-decoration:underline;
+}
+
+.a:active {
+	color:#F55925;
+}
+.h1 a {
+	text-decoration:none;
+	color:#000;
+}
+.h1 a:hover {
+	text-decoration:underline;
+}
+.table {
+	border:2px dashed #17A3F7;
+	padding:20px;
+	width:95%;
+	
+}
+.table tr td{
+	padding:5px;
+}
+.table_view {
+	border:1px solid #17A3F7;
+	min-width:400px;
+	border-collapse:collapse;
+}
+.table_view tr.heading th {
+	background:#17A3F7;
+	padding:5px;
+	color:#FFF;
+}
+.table_view tr.odd {
+	background:#F7F7F7;
+}
+.table_view tr.even {
+	background:#FFF;
+}
+.table_view tr.odd:hover, .table_view tr.even:hover {
+	background:#FEFDE0;
+}
+.table_view tr td {
+	padding:5px;
+}
+.input {
+	border:#CCC solid 1px;
+	padding:5px;
+}
+
+.input:focus {
+	border:#999 solid 1px;
+	background:#FEFDE0;
+	padding:5px;
+}
+</style>
+</head>
+
+<body>
+<div class="as_wrapper">
+	<h1 class="h1"><a href="">Generate a workbook to Upload your Stock</a></h1>
+    
+    <h3 style="color:#f00; font-size:16px">Please make sure no product on this form/worksheet is already registered in stock</h3>
+	<div class="as_country_container">
+	<?php
+    echo $msg; // Display the result message generated in the above PHP actions,
+    //Create form to get number of rows to be generated to insert 
+    ?>
+        <form action="<?php $_SERVER['PHP_SELF']; ?>" method="get" name="amtForm">
+        <table align="center">
+        <tr>
+            <td>Generate Excel Columns</td>
+            <td><input type="text" name="amt" class="input" <?php if(isset($_GET["amt"])) { ?> value="<?php echo $_GET["amt"]; ?>" <?php } ?> /></td>
+            <td><input type="submit" value="Generate"  /></td>
+        
+        </tr>
+        </table>
+        <br />
+        </form>  
+        
+        
+        <?php
+        // Get the amount to be generated
+        if(isset($_GET['amt'])) {
+			if($_GET['amt'] > 0) {
+        ?>
+            <form action="<?php $_SERVER['PHP_SELF']; ?>" method="post">
+            <table align="center" class="table" >
+            <tr style="background:#ccc; color:#000; font-weight:bold">
+                <td align="center">Sno</td>
+                <td align="center">Product</td>
+                <td align="center">Category</td>
+                <td align="center">price</td>
+                 <td align="center">Quantity</td>
+                <td align="center">Serial</td>
+                <td align="center">Barcode</td>
+               
+            </tr>
+            <?php
+                // Loop the rows and inputs according to the amount
+                for($i=1; $i<=$_GET['amt']; $i++) {
+            ?>
+            <tr>
+            
+         
+                <td><?php echo $i; ?></td>
+                <td><input type="text" name="product<?php echo $i; ?>" class="input" required /></td>
+                <td><select name="cate<?php echo $i; ?>" class="input" required="required" />
+                  <?php $amou="SELECT * from categories";
+	$run=mysql_query($amou) or die (mysql_error());?>
+
+        <option></option>
+         <?php
+		 while ($row=mysql_fetch_array($run)){
+						
+						$amount_id=$row['cat_id'];	
+							$cate=$row['cat'];	
+														
+							echo "<option value='$cate' >$cate</option>";
+							
+					}
+                   
+		 ?>      
+                
+                </td>
+                <td><input type="text" name="price<?php echo $i; ?>" class="input" required /></td>
+                
+                 <td><input type="text" name="qty<?php echo $i; ?>" class="input" required /></td>
+                 <td><input type="TEXT" name="serial<?php echo $i; ?>" class="input" /></td>
+                <td><input type="TEXT" name="barcode<?php echo $i; ?>" class="input" /></td>
+                <td><input type="hidden" name="total<?php echo $i; ?>" class="input" /></td>
+                
+                <td><input type="hidden" name="date<?php echo $i; ?>" class="input" /></td>
+                 <td><input type="hidden" name="status<?php echo $i; ?>" class="input" /></td>
+                <td><input type="hidden" name="month<?php echo $i; ?>" class="input" /></td>
+                <td><input type="hidden" name="agent<?php echo $i; ?>" class="input" /></td>
+                
+            </tr>
+            <?php
+                }
+            ?>
+            <tr>
+                <td colspan="4" align="center">
+                <input type="hidden" name="total" value="<?php echo $i-1; ?>" /> <?php // Post the total rows count value ?>
+                <input type="submit" name="submit" value="Add to stocks" /></td>
+            </tr>
+            </table>
+            </form>       
+            
+            
+            
+    
+        <?php
+        	}
+		}
+        ?>
+	</div>
+</div>
+</body>
+</html>
+
+<?php
+
+?>
